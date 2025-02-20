@@ -1,9 +1,9 @@
 # pybinlock
 
-`binlock` is a python module for programatically reading and writing Avid Media Composer bin locks (`.lck` files), which are primarily used in multiuser Avid environments.
+`binlock` is a python module for programmatically reading and writing Avid Media Composer bin locks (`.lck` files), which are primarily used in multiuser Avid environments.
 
 The `binlock.BinLock` class encapsulates the name used in a bin lock and provides functionality for reading and writing a bin lock `.lck` file.  It is essentially a python 
-[`dataclass`](https://docs.python.org/3/library/dataclasses.html) with additional validation and convenience methods.  With `binlock.Binlock`, lock files can be programatically 
+[`dataclass`](https://docs.python.org/3/library/dataclasses.html) with additional validation and convenience methods.  With `binlock.Binlock`, lock files can be programmatically 
 created, [read from](#reading), [written to](#writing), or ["held" with a context manager](#as-a-context-manager).
 
 >[!WARNING]
@@ -33,7 +33,7 @@ from binlock import BinLock
 lock = BinLock("zMichael")
 lock.to_path("01_EDITS/Reel 1.lck")
 ```
-This would lock your `Reel 1.avb` bin with the name `zMichael` in your Avid proejct.  You may need to refresh your project, or attempt to open the bin, to immediately 
+This would lock your `Reel 1.avb` bin with the name `zMichael` in your Avid project.  You may need to refresh your project, or attempt to open the bin, to immediately 
 see the result.
 
 >[!CAUTION]
@@ -42,7 +42,7 @@ see the result.
 
 ## As A Context Manager
 
-The strongly recommended way to programatically lock an Avid bin using `pybinlock` is to use `BinLock.hold(lck_path)` as a context manager.  This allows you to "hold" the 
+The strongly recommended way to programmatically lock an Avid bin using `pybinlock` is to use `BinLock.hold(lck_path)` as a context manager.  This allows you to "hold" the 
 lock on a bin while you do stuff to it.  It includes safety checks to ensure a lock does not already exist (i.e. the bin is locked by someone else), and automatically 
 removes the lock on exit or on fatal error.
 
