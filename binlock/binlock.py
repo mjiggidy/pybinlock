@@ -1,7 +1,8 @@
 """Utilites for working with bin locks (.lck files)"""
 
 import dataclasses, pathlib, typing, contextlib
-from . import MAX_NAME_LENGTH, BinLockLengthError, BinLockFileDecodeError
+from . import BinLockLengthError, BinLockFileDecodeError
+from . import MAX_NAME_LENGTH, DEFAULT_FILE_EXTENSION
 
 @dataclasses.dataclass(frozen=True)
 class BinLock:
@@ -51,7 +52,12 @@ class BinLock:
 		"""Hold the lock"""
 
 		return _BinLockContextManager(self, lock_path)
+	
+	@staticmethod
+	def lock_path_from_bin_path(bin_path:str) -> str:
+		"""Determine the lock path from a given bin path"""
 
+		return str(pathlib.Path(bin_path).with_suffix(DEFAULT_FILE_EXTENSION))
 
 class _BinLockContextManager(contextlib.AbstractContextManager):
 	"""Context manager for a binlock file"""
