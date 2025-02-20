@@ -6,6 +6,10 @@ The `binlock.BinLock` class encapsulates the name used in a bin lock and provide
 [`dataclass`](https://docs.python.org/3/library/dataclasses.html) with additional validation and convenience methods.  With `binlock.Binlock`, lock files can be programatically 
 created, [read from](#reading), [written to](#writing), or [held with a context manager](#as-a-context-manager).
 
+>[!WARNING]
+>While the `.lck` lock file format is a very simple one, it is officially undocumented.  Use this library at your own risk -- I assume no responsibility for any damage to your
+>project, loss of data, or underwhelming box office performance.
+
 ## Reading
 
 Reading from an existing `.lck` file is possible using the `BinLock.from_path(lck_path)` class method, passing an existing `.lck` file path as a string.
@@ -59,7 +63,7 @@ recommended that any time you lock a bin, you also add an entry in the Avid bin 
 from binlock import BinLock, BinLockExistsError
 from binlog import BinLog
 
-path_bin = "01_EDITS/Reel 1.avb"
+path_bin  = "01_EDITS/Reel 1.avb"
 path_lock = BinLock.lock_path_from_bin_path(path_bin)
 path_log  = BinLog.log_path_from_bin_path(path_bin)
 
@@ -71,9 +75,11 @@ try:
     BinLog.touch(path_log, computer=computer_name, user=user_name)
     do_cool_stuff_to_bin(path_bin)
 
-except BinLockExistsError as e:
+except BinLockExistsError:
   try:
     print("Bin is already locked by", BinLock.from_path(path_lock).name)
-  except Exception as e:
+  except Exception:
     print("Bin is already locked")
 ```
+>[!TIP]
+>Oh!  Did you see that?  `BinLock.lock_path_from_bin_path(path_bin)` is a static method that returns the expected path to a `.lck` lock file for a given `.avb` bin.
