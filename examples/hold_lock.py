@@ -4,7 +4,7 @@ I don't know -- I think it's neat.
 """
 
 import sys, pathlib, enum
-from binlock import BinLock, DEFAULT_FILE_EXTENSION
+from binlock import BinLock
 
 class OverEngineeredExitCodes(enum.IntEnum):
 

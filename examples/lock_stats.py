@@ -9,7 +9,7 @@ from binlock import BinLock
 if __name__ == "__main__":
 
 	if not len(sys.argv) > 1:
-		print(f"Usaage: {pathlib.Path(__file__).name} dir_with_locks", file=sys.stderr)
+		print(f"Usage: {pathlib.Path(__file__).name} dir_with_locks", file=sys.stderr)
 		sys.exit(1)
 	
 	lock_long   = None
@@ -32,7 +32,9 @@ if __name__ == "__main__":
 		if not lock_short or len(lock_short.name) > len(current_lock.name):
 			lock_short = current_lock
 	
+	if lock_long is None:
+		print("Found no locks in here.")
+		sys.exit()
+	
 	print(f" Longest lock name: {str(len(lock_long.name)).rjust(2)} chars  ({lock_long.name})")
 	print(f"Shortest lock name: {str(len(lock_short.name)).rjust(2)} chars  ({lock_short.name})")
-
-
