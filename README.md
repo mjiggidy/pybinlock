@@ -4,7 +4,7 @@
 
 The `binlock.BinLock` class encapsulates the name used in a bin lock and provides functionality for reading and writing a bin lock `.lck` file.  It is essentially a python 
 [`dataclass`](https://docs.python.org/3/library/dataclasses.html) with additional validation and convenience methods.  With `binlock.Binlock`, lock files can be programatically 
-created, [read from](#reading), [written to](#writing), or [held with a context manager](#as-a-context-manager).
+created, [read from](#reading), [written to](#writing), or ["held" with a context manager](#as-a-context-manager).
 
 >[!WARNING]
 >While the `.lck` lock file format is a very simple one, it is officially undocumented.  Use this library at your own risk -- I assume no responsibility for any damage to your
@@ -38,13 +38,15 @@ see the result.
 
 >[!CAUTION]
 >Directly writing a `.lck` file in this way will allow you to overwrite any existing `.lck` file, which is almost certainly a bad idea.  Take care to first
->check for an existing `.lck` file, or even better, use the context manager approach instead.
+>check for an existing `.lck` file, or even better, use [the context manager approach](#as-a-context-manager) instead.
 
 ## As A Context Manager
 
 The strongly recommended way to programatically lock an Avid bin using `pybinlock` is to use `BinLock.hold(lck_path)` as a context manager.  This allows you to "hold" the 
-lock on a bin while you do stuff to it, while including safety checks to ensure a lock does not already exist (i.e. the bin is locked by someone else), and automatically 
-removing the lock on exit or on fatal error.
+lock on a bin while you do stuff to it.  It includes safety checks to ensure a lock does not already exist (i.e. the bin is locked by someone else), and automatically 
+removes the lock on exit or on fatal error.
+
+This approach should be used whenever possible (in favor of [directly writing](#writing) a `.lck`, which can be more risky).
 
 ```python
 import time
