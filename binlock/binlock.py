@@ -1,7 +1,7 @@
 """Utilites for working with bin locks (.lck files)"""
 
 import dataclasses, pathlib, typing, contextlib
-from . import BinLockLengthError, BinLockFileDecodeError
+from . import BinLockLengthError, BinLockFileDecodeError, BinLockExistsError
 from . import MAX_NAME_LENGTH, DEFAULT_FILE_EXTENSION
 
 @dataclasses.dataclass(frozen=True)
@@ -72,7 +72,7 @@ class _BinLockContextManager(contextlib.AbstractContextManager):
 		"""Write the lock on enter"""
 
 		if pathlib.Path(self._lock_path).is_file():
-			raise FileExistsError(f"Lock already exists at {self._lock_path}")
+			raise BinLockExistsError(f"Lock already exists at {self._lock_path}")
 		
 		try:
 			self._lock_info.to_path(self._lock_path)

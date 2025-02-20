@@ -3,3 +3,6 @@ class BinLockLengthError(ValueError):
 
 class BinLockFileDecodeError(ValueError):
 	"""File could not be decoded; likely not a valid lock file"""
+
+class BinLockExistsError(FileExistsError):
+	"""A lock file already exists for this bin, perhaps from another user"""
