@@ -66,7 +66,7 @@ from binlock import BinLock, BinLockExistsError
 from binlog import BinLog
 
 path_bin  = "01_EDITS/Reel 1.avb"
-path_lock = BinLock.lock_path_from_bin_path(path_bin)
+path_lock = BinLock.get_lock_path_from_bin_path(path_bin)
 path_log  = BinLog.log_path_from_bin_path(path_bin)
 
 computer_name = "zMichael"
