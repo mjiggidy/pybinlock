@@ -8,16 +8,71 @@ inadvertently make changes to a bin that would step over each other.
 
 The ability to lock, unlock, and otherwise parse a lock file for a bin would be similarly useful for pipeline and automation purposes, and that's where `binlock` comes in.
 
+>[!WARNING]
+>While the `.lck` lock file format is a very simple one, it is officially undocumented.  Use this library at your own risk -- I assume no responsibility for any damage to your
+>project, loss of data, or underwhelming box office performance.
+
+## Quick Start
+
+### Creating a new `BinLock`:
+
+```python
+from binlock import BinLock
+
+default_lock = BinLock()                # The lock name defaults to the machine's host name, mimicking Avid's behavior
+custom_lock  = BinLock("Do Not Touch")  # A custom display name can be given to the lock for special purposes
+
+print(f"{default_lock=}  {custom_lock=}")
+```
+
+Example Output:
+```
+default_lock=BinLock(name='zMichael')  custom_lock=BinLock(name='Do Not Touch')
+```
+
+### Reading an existing bin lock:
+
+```python
+from binlock import BinLock
+
+# You can either directly provide the path to a lock file,
+# or provide a path to an Avid bin, and `BinLock` will figure out the appropriate path to the lock file for you
+# Ultimately, both of these statements read from the same `01_EDITS/Reel 1.lck`
+
+lock_from_lck = BinLock.from_path("01_EDITS/Reel 1.lck") # Read the .lck file directly at a given path
+lock_from_avb = BinLock.from_bin("01_EDITS/Reel 1.avb")  # Read the .lck file corresponding to a given avid bin path
+
+print(f"{lock_from_lck=}  {lock_from_avb=}")
+```
+
+Example Output (assuming the Avid bin `Reel 1.avb` is currently locked by `zMichael`):
+```
+lock_from_lck=BinLock(name='zMichael')  lock_from_avb=BinLock(name='zMichael')
+```
+
+### Locking a bin while you do stuff ("holding" the lock), then releasing it:
+
+```python
+from binlock import BinLock
+
+path_bin = "01_EDITS/Reel 1.avb"
+
+# Use a context manager to lock a bin as "Processing Bin..." while you do stuff to the bin
+with BinLock("Processing Bin...").hold_bin(path_bin) as lock:
+  print(f"Bin has been locked as {lock.name}")
+  do_risky_things_to_bin(path_bin)
+
+print("Lock has been released")
+```
+
+That's the gist of it!  For more of the nitty-gritty, read on.
+
 ---
 
 The `binlock.BinLock` class encapsulates the information used in a bin lock and provides functionality for reading and writing a bin lock `.lck` file.  It is essentially a python 
 [`dataclass`](https://docs.python.org/3/library/dataclasses.html) with additional validation and convenience methods.  With `binlock.Binlock`, lock files can be programmatically 
-created, [read from](#reading), [written to](#writing), or ["held" with a context manager](#as-a-context-manager) to indicate ownership and render bins read-only to other users in 
+created, [read from](#reading), [written to](#locking-a-bin), or ["held" with a context manager](#holding-a-lock-on-a-bin) to indicate ownership and render bins read-only to other users in 
 the shared project.
-
->[!WARNING]
->While the `.lck` lock file format is a very simple one, it is officially undocumented.  Use this library at your own risk -- I assume no responsibility for any damage to your
->project, loss of data, or underwhelming box office performance.
 
 Working with bin locks can be done either by referring directly to the `.lck` files themselves, or to the Avid bins `.avb` they affect.  Ultimately this depends on how you like to 
 work and what exacly you're doing, but often the best way is to refer to the Avid bins, which we'll cover first.
