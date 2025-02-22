@@ -105,7 +105,7 @@ Here, a bin will be safely locked, then unlocked on completion.
 
 ## Lock-Referred Operations
 
-Operations similiar to [bin-referred operations](#bin-referred-operations) can be done by referencing the `.lck` lock files directly.  This may be useful for 
+Operations similar to [bin-referred operations](#bin-referred-operations) can be done by referencing the `.lck` lock files directly.  This may be useful for 
 more specialized workflows, but should be used with caution as the are less safe.
 
 ### Reading A Lock File
