@@ -81,7 +81,7 @@ class BinLock:
 			raise BinLockNotFoundError("This bin is not currently locked")
 		
 		if bin_lock != self:
-			raise BinLockOwnershipError("Bin locks do not match")
+			raise BinLockOwnershipError(f"This bin is currently locked by {bin_lock.name}")
 		
 		pathlib.Path(self.get_lock_path_from_bin_path(bin_path)).unlink(missing_ok=True)
 	
