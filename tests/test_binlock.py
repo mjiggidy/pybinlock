@@ -97,7 +97,7 @@ def test_unlock_bin_wrong_owner(tmp_path):
 def test_get_lock_from_bin_returns_none(tmp_path):
 	# When no lock file exists, get_lock_from_bin should return None.
 	dummy_bin = create_dummy_bin(tmp_path)
-	assert BinLock.get_lock_from_bin(str(dummy_bin)) is None
+	assert BinLock.from_bin(str(dummy_bin)) is None
 
 def test_hold_lock_context_manager(tmp_path):
 	# The hold_lock context manager should create the lock file on entry and remove it on exit,

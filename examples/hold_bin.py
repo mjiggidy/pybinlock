@@ -20,7 +20,7 @@ if __name__ == "__main__":
 	with BinLock().hold_bin(path_bin) as lock:
 		input(f"Holding lock on {path_bin} as {lock.name}... (press any key)")
 	
-	if BinLock().get_lock_from_bin(path_bin):
+	if BinLock().from_bin(path_bin):
 		print("Somehow unable to release bin")
 		sys.exit(3)
 
