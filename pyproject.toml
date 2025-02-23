@@ -4,4 +4,37 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pybinlock"
-version = "0.2.0"
+version = "0.2.1"
+authors = [{name = "Michael Jordan", email = "michael@glowingpixel.com"}]
+
+description = "A python package for programmatically reading, writing, and managing Avid Media Composer bin locks (`.lck` files)."
+keywords = ["avid", "media composer", "nle", "editorial", "post", "production", "film", "television", "nexis", "avb", "bins", "lock", "lck"]
+classifiers = [
+	"Development Status :: 4 - Beta",
+
+	"Intended Audience :: Developers",
+	"Intended Audience :: Telecommunications Industry",
+	"Intended Audience :: Other Audience",
+
+	"License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+
+	"Operating System :: OS Independent",
+
+	"Programming Language :: Python :: 3",
+
+	"Topic :: File Formats",
+	"Topic :: Multimedia",
+	"Topic :: Multimedia :: Video :: Non-Linear Editor",
+	"Topic :: Utilities"
+
+]
+
+readme = "README.md"
+license = "GPL-3.0-or-later"
+
+requires-python = ">= 3.6"
+
+[project.urls]
+Homepage   = "https://github.com/mjiggidy/pybinlock/"
+Repository = "https://github.com/mjiggidy/pybinlock.git"
+Issues     = "https://github.com/mjiggidy/pybinlock/issues/"
