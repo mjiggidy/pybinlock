@@ -216,7 +216,7 @@ recommended that any time you lock a bin, you also add an entry in the Avid bin 
 
 ```python
 from binlock import BinLock, BinLockExistsError
-from binhistory import BinLog
+from binhistory import BinLog, BinLogEntry
 
 path_bin  = "01_EDITS/Reel 1.avb"
 path_log  = BinLog.log_path_from_bin_path(path_bin)
@@ -226,7 +226,7 @@ user_name     = "MJ 2024.12.2"
 
 try:
   with BinLock(computer_name).hold_bin(path_bin):
-    BinLog.touch(path_log, computer=computer_name, user=user_name)
+    BinLog.touch(path_log, BinLogEntry(computer=computer_name))
     do_cool_stuff_to_bin(path_bin)
 except BinLockExistsError:
   print(e)
