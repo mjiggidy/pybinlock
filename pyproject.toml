@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pybinlock"
-version = "0.2.1"
+version = "0.2.2"
 authors = [{name = "Michael Jordan", email = "michael@glowingpixel.com"}]
 
 description = "A python package for programmatically reading, writing, and managing Avid Media Composer bin locks (`.lck` files)."
