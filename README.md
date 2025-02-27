@@ -14,20 +14,15 @@ The ability to lock, unlock, and otherwise parse a lock file for a bin would be 
 
 ## Quick Start
 
-### Creating a new `BinLock`:
+### Indefinitely Locking A Bin:
 
 ```python
 from binlock import BinLock
 
-default_lock = BinLock()                # The lock name defaults to the machine's host name, mimicking Avid's behavior
-custom_lock  = BinLock("Do Not Touch")  # A custom display name can be given to the lock for special purposes
+default_lock = BinLock()                    # The lock name defaults to the machine's hostname, mimicking Avid's behavior
+custom_lock  = BinLock("Do Not Touch")      # A custom display name can be given to the lock for special purposes
 
-print(f"{default_lock=}  {custom_lock=}")
-```
-
-Example Output:
-```
-default_lock=BinLock(name='zMichael')  custom_lock=BinLock(name='Do Not Touch')
+custom_lock.lock_bin("01_EDITS/Reel 1.avb") # Here, `Reel 1.avb` will appear locked in Avid as "Do Not Touch"
 ```
 
 ### Reading an existing bin lock:
@@ -102,6 +97,7 @@ To lock an Avid bin (by writing a `.lck` lock file), we'll create a new `BinLock
 
 ```python
 from binlock import BinLock
+from binlock.exceptions import BinLockExistsError
 new_lock = BinLock("zMichael")
 try:
   new_lock.lock_bin("01_EDITS/Reel 2.avb")
@@ -127,6 +123,7 @@ A bin can be unlocked, but only by a `BinLock` of the same name.
 
 ```python
 from binlock import BinLock
+from binlock.exceptions import BinLockOwnershipError
 try:
   BinLock("zMichael").unlock_bin("01_EDITS/Reel 2.avb")
 except BinLockOwnershipError as e:
@@ -212,22 +209,22 @@ Here, the context manager will throw a `BinLockExistsError` if the lock already 
 ## Being A "Good Citizen"
 
 I don't mean to toot my own little horn here, but I have also released [`pybinhistory`](https://github.com/mjiggidy/pybinhistory), which is a python package for writing bin log files.  It is highly 
-recommended that any time you lock a bin, you also add an entry in the Avid bin log, just as Avid would do.  Here they are together:
+recommended that any time you modify the contents of a bin, you also add an entry in the Avid bin log, just as Avid would do.  Here they are together:
 
 ```python
-from binlock import BinLock, BinLockExistsError
+from binlock import BinLock
+from binlock.exceptions import BinLockExistsError
 from binhistory import BinLog, BinLogEntry
 
 path_bin  = "01_EDITS/Reel 1.avb"
-path_log  = BinLog.log_path_from_bin_path(path_bin)
-
-computer_name = "zMichael"
-user_name     = "MJ 2024.12.2"
 
 try:
+
   with BinLock(computer_name).hold_bin(path_bin):
-    BinLog.touch(path_log, BinLogEntry(computer=computer_name))
+    # Do custom things
     do_cool_stuff_to_bin(path_bin)
+    # Then add an entry to the bin log
+    BinLog.touch_bin(path_bin)
 except BinLockExistsError:
   print(e)
 ```
