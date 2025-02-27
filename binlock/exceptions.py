@@ -1,3 +1,7 @@
+"""
+Bespoke `Exception`s for pybinlock
+"""
+
 class BinLockNameError(ValueError):
 	"""The given lock name is not valid for use"""
 

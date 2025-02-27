@@ -1,20 +1,10 @@
-"""Utilites for working with bin locks (.lck files)"""
+"""
+Utilites for working with bin locks (.lck files)
+"""
 
-import dataclasses, pathlib, typing, contextlib, socket
-from . import BinLockNameError, BinLockFileDecodeError, BinLockExistsError, BinLockNotFoundError, BinLockOwnershipError
-
-DEFAULT_FILE_EXTENSION:str = ".lck"
-"""The default file extension for a lock file"""
-
-DEFAULT_LOCK_NAME:str = socket.gethostname()
-"""Default name to use on the lock, if none is provided"""
-
-MAX_NAME_LENGTH:int = 24
-"""Maximum allowed lock name"""
-# TODO: Observed max 21 in real-life locks... need to investigate
-
-TOTAL_FILE_SIZE:int = 255
-"""Total size of a .lck file"""
+import dataclasses, pathlib, typing, contextlib
+from .exceptions import BinLockNameError, BinLockFileDecodeError, BinLockExistsError, BinLockNotFoundError, BinLockOwnershipError
+from .defaults import DEFAULT_FILE_EXTENSION, DEFAULT_LOCK_NAME, MAX_NAME_LENGTH, TOTAL_FILE_SIZE
 
 @dataclasses.dataclass(frozen=True)
 class BinLock:

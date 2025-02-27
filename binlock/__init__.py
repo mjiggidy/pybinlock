@@ -4,5 +4,5 @@ By Michael Jordan <michael@glowingpixel.com>
 https://github.com/mjiggidy/pybinlock
 """
 
-from .exceptions import BinLockFileDecodeError, BinLockNameError, BinLockExistsError, BinLockNotFoundError, BinLockOwnershipError
+from . import defaults, exceptions
 from .binlock import BinLock
