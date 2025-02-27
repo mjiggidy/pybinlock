@@ -220,7 +220,7 @@ path_bin  = "01_EDITS/Reel 1.avb"
 
 try:
 
-  with BinLock(computer_name).hold_bin(path_bin):
+  with BinLock().hold_bin(path_bin):
     # Do custom things
     do_cool_stuff_to_bin(path_bin)
     # Then add an entry to the bin log
