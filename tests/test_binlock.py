@@ -1,14 +1,14 @@
 import pytest
 import pathlib
-from binlock import (
-	BinLock,
+from binlock import BinLock
+from binlock.defaults import MAX_NAME_LENGTH
+from binlock.exceptions import (
 	BinLockNameError,
 	BinLockFileDecodeError,
 	BinLockExistsError,
 	BinLockOwnershipError,
 )
 
-from binlock.binlock import MAX_NAME_LENGTH
 
 # Helper to create a dummy bin file (with a .avb extension)
 def create_dummy_bin(tmp_path):
