@@ -1,9 +1,14 @@
 API Reference
 =============
 
-.. autoclass:: binlock.BinLock
-	:members:
-	:undoc-members:
+Classes
+-------
+
+.. autosummary::
+   :toctree: generated
+   :recursive:
+
+   binlock.BinLock
 
 Submodules
 ----------
