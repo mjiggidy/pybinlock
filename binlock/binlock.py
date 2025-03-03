@@ -76,7 +76,7 @@ class BinLock:
 		pathlib.Path(self.get_lock_path_from_bin_path(bin_path)).unlink(missing_ok=True)
 	
 	@classmethod
-	def from_bin(cls, bin_path:str, missing_bin_okay:bool=True) -> "BinLock":
+	def from_bin(cls, bin_path:str, missing_bin_okay:bool=True) -> typing.Optional["BinLock"]:
 		"""
 		Get the existing lock for a given bin (.avb) path
 

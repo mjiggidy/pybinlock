@@ -1,5 +1,5 @@
 """
-Bespoke `Exception`s for pybinlock
+Bespoke :class:`Exception` classes for pybinlock
 """
 
 class BinLockNameError(ValueError):

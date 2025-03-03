@@ -8,7 +8,7 @@ Once you have :doc:`installed <installation>` the ``pybinlock`` package, you can
     import binlock
 
 .. note::
-    The package is distributed for installation as ``pybinlock``, but the import name of the library is ``binlock``.
+    The package is distributed for installation as ``pybinlock``, but the import name of the library is :mod:`binlock`.
 
 Create a new lock
 -----------------
@@ -25,14 +25,18 @@ Use the :class:`binlock.BinLock` class to create a new lock in memory:
 
     # By default, a lock will use your hostname, mimicking Avid's behavior
     my_lock = BinLock()
+    print(f"Bin lock will display the default name: {my_lock.name}")
 
     # You can alternatively specify a custom lock name
     custom_lock = BinLock("Do Not Touch")
+    print(f"Bin lock will display a custom name: {custom_lock.name}")
 
 Read an existing lock
 ---------------------
 
-Use the :meth:`binlock.BinLock.from_bin` factory method to read an existing lock for a given bin:
+Use the :meth:`binlock.BinLock.from_bin` factory method to read an existing lock for a given bin.
+
+If a lock file does not appear to be the correct format, this will raise a :class:`binlock.exceptions.BinLockFileDecodeError`.
 
 .. automethod:: binlock.BinLock.from_bin
     :no-index:
@@ -50,7 +54,7 @@ Use the :meth:`binlock.BinLock.from_bin` factory method to read an existing lock
 .. tip::
     Many of these methods accept an optional ``missing_bin_okay`` ::class:`python:bool`, which defaults to ``True``.
     
-    If ``missing_bin_okay`` is set to ``False``, they will throw a :class:`FileNotFoundError` if the given 
+    If ``missing_bin_okay`` is set to ``False``, they will raise a :class:`FileNotFoundError` if the given 
     bin path does not exist.
 
 
@@ -64,7 +68,7 @@ Use :meth:`binlock.BinLock.hold_bin` as a context manager to safely "hold the lo
 read or write to it.  The context manager protects against writing to a bin that is already locked by someone else, and 
 cleanly removes the lock once your code is complete.
 
-If the bin is already locked, this will throw a :class:`binlock.exceptions.BinLockExistsError`.
+If the bin is already locked, this will raise a :class:`binlock.exceptions.BinLockExistsError`.
 
 .. automethod:: binlock.BinLock.hold_bin
     :no-index:
@@ -94,7 +98,7 @@ Indefinitely lock a bin
 
 Use :meth:`binlock.BinLock.lock_bin` when you wish to lock a bin and *leave* it that way.
 
-If the bin is already locked, this will throw a :class:`binlock.exceptions.BinLockExistsError`.
+If the bin is already locked, this will raise a :class:`binlock.exceptions.BinLockExistsError`.
 
 .. automethod:: binlock.BinLock.lock_bin
     :no-index:
@@ -132,7 +136,7 @@ match the name of the lock you are attempting to remove.
 This method will raise :class:`binlock.exceptions.BinLockNotFoundError` if the bin is not locked.
 
 It will raise :class:`binlock.exceptions.BinLockOwnershipError` if the name on the lock does not match the name of 
-the :class:`binlock.BinLock` that is calling :method:`binlock.BinLock.unlock_bin`.
+the :class:`binlock.BinLock` that is calling :meth:`binlock.BinLock.unlock_bin`.
 
 .. automethod:: binlock.BinLock.unlock_bin
     :no-index:

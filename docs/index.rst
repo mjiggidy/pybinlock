@@ -7,13 +7,14 @@
 pybinlock
 #########
 
-``pybinlock`` is a python package for the ``binlock`` library.
+``pybinlock`` is a python package for the :mod:`binlock` library.
 
-``binlock`` is a python library for programmatically locking and unlocking bins in Avid Media Composer projects.
+:mod:`binlock` is a python library for programmatically locking and unlocking bins in Avid Media Composer projects.
 
 .. caution::
 
-   While the ``.lck`` lock file format is a very simple one, it is officially undocumented. Use this library at your own risk -- the developer assumes 
+   :mod:`binlock` is an unofficial library created for educational purposes.  While the ``.lck`` lock file format 
+   is a very simple one, it is officially undocumented. Use this library at your own risk -- the developer assumes 
    no responsibility for any damage to your project, loss of data, or underwhelming box office performance.
 
 
@@ -25,15 +26,15 @@ over an Avid bin (``.avb`` or ``.avs`` files) to potentially write changes.  Whi
 open the bin, albeit in read-only mode, until the lock is released.  In this way, two operators cannot inadvertently make changes to the 
 same bin at the same time.
 
-About ``binlock``
------------------
+About :mod:`binlock`
+--------------------
 
-This here ``binlock`` library works by reading and writing (``.lck``) files, which are the underyling mechanisms used by Avid to mark bins as "locked."
+This here :mod:`binlock` library works by reading and writing (``.lck``) files, which are the underyling mechanisms used by Avid to mark bins as "locked."
 
 Interesting Uses
 ^^^^^^^^^^^^^^^^
 
-``binlock`` allows functionality beyond Avid's typical lock file implementation, such as:
+:mod:`binlock` allows functionality beyond Avid's typical lock file implementation, such as:
 
 * Permanently locking bins
 * Temporarily locking bins while programmatically reading/writing to them
