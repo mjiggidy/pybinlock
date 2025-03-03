@@ -1,5 +1,10 @@
 API Reference
-=============
+#############
+
+:mod:`binlock`
+==============
+
+.. automodule:: binlock
 
 Classes
 -------
@@ -8,7 +13,7 @@ Classes
    :toctree: generated
    :recursive:
 
-   binlock.BinLock
+   BinLock
 
 Submodules
 ----------
@@ -17,5 +22,5 @@ Submodules
    :toctree: generated
    :recursive:
 
-   binlock.defaults
-   binlock.exceptions
+   defaults
+   exceptions
