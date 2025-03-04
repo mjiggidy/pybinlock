@@ -38,6 +38,8 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }
 
+
+
 autodoc_member_order = "bysource"
 autodoc_preserve_defaults = True
 
@@ -55,3 +57,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 import sphinx_rtd_theme
 html_theme = "sphinx_rtd_theme"
 html_static_path = ['_static']
+html_theme_options = {
+    "collapse_navigation": False,  # Keeps the sidebar expanded
+}

@@ -52,9 +52,9 @@ If a lock file does not appear to be the correct format, this will raise a :clas
         print(f"Bin is locked by {lock.name}")
 
 .. tip::
-    Many of these methods accept an optional ``missing_bin_okay`` ::class:`python:bool`, which defaults to ``True``.
+    Many of these methods accept an optional ``missing_bin_ok`` ::class:`python:bool`, which defaults to ``True``.
     
-    If ``missing_bin_okay`` is set to ``False``, they will raise a :class:`FileNotFoundError` if the given 
+    If ``missing_bin_ok`` is set to ``False``, they will raise a :class:`FileNotFoundError` if the given 
     bin path does not exist.
 
 
@@ -81,7 +81,7 @@ If the bin is already locked, this will raise a :class:`binlock.exceptions.BinLo
     bin_path = "01_EDITS/Reel 1.avb"
     
     try:
-        with BinLock("Processing...").hold_bin(bin_path, missing_bin_okay=False) as lock:
+        with BinLock("Processing...").hold_bin(bin_path, missing_bin_ok=False) as lock:
             print(f"Bin is successfully locked as {lock.name}")
             do_stuff_to_bin(bin_path)
     except BinLockExistsError:
@@ -120,6 +120,7 @@ If the bin is already locked, this will raise a :class:`binlock.exceptions.BinLo
             lock.lock_bin(avb_path)
         except BinLockExistsError:
             print(f"Skipping {avb_path.name}: Bin is locked by someone else")
+            continue
         else:
             print(f"Locked {avb_path.name} as {lock.name}")
 
@@ -127,7 +128,7 @@ Unlock a bin
 ------------
 
 Use :meth:`binlock.BinLock.unlock_bin` to unlock a bin by deleting the ``.lck`` file.  This 
-is useful for unlocking :ref:`indefinite locks <_indefinite-locks>`, or for removing stale 
+is useful for unlocking :ref:`indefinite locks <indefinite-locks>`, or for removing stale 
 locks left over from an Avid crash or archived project.
 
 As a security measure, the :attr:`binlock.BinLock.name` attribute of the :class:`binlock.BinLock` instance must 

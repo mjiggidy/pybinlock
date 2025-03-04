@@ -14,7 +14,7 @@ Order of operations
 Opening a bin unlocked
 ----------------------
 
-#. The bin is locked with the creation of a ``.lck`` file
+#. The bin is locked from modification by other users with the creation of a ``.lck`` file
 #. The ``.avb`` is read from storage
 
 Closing a bin
@@ -34,4 +34,4 @@ Other tools
 pybinhistory
 ------------
 
-You may also be interested in `pybinhistory <https://pybinhistory.readthedocs.io/>`_
+You may also be interested in `pybinhistory <https://pybinhistory.readthedocs.io/>`_ for reading and writing Avid bin log (``.log``) files.

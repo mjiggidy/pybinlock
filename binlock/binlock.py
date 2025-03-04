@@ -76,14 +76,14 @@ class BinLock:
 		pathlib.Path(self.get_lock_path_from_bin_path(bin_path)).unlink(missing_ok=True)
 	
 	@classmethod
-	def from_bin(cls, bin_path:str, missing_bin_okay:bool=True) -> typing.Optional["BinLock"]:
+	def from_bin(cls, bin_path:str, missing_bin_ok:bool=True) -> typing.Optional["BinLock"]:
 		"""
 		Get the existing lock for a given bin (.avb) path
 
 		Returns `None` if the bin is not locked
 		"""
 
-		if not missing_bin_okay and not pathlib.Path(bin_path).is_file():
+		if not missing_bin_ok and not pathlib.Path(bin_path).is_file():
 			raise FileNotFoundError(f"Bin does not exist at {bin_path}")
 		
 		lock_path = cls.get_lock_path_from_bin_path(bin_path)
