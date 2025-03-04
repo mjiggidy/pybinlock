@@ -133,15 +133,16 @@ class BinLock:
 		return str(pathlib.Path(bin_path).with_suffix(DEFAULT_FILE_EXTENSION))
 	
 	def __repr__(self) -> str:
-		return f"<{self.__class__} name={self.name}>"
+		return f"<{self.__class__.__name__} name={self.name}>"
 	
 	def __str__(self) -> str:
 		return self.name
 	
 	def __eq__(self, other) -> bool:
-		if not isinstance(other, self.__class__):
-			return False
-		return self.name == other.name
+		return isinstance(other, self.__class__) and self.name == other.name
+	
+	def __hash__(self):
+		return hash(self.name)
 
 class _BinLockContextManager(contextlib.AbstractContextManager):
 	"""Context manager for a binlock file"""
