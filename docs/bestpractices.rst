@@ -2,7 +2,7 @@ Best practices
 ##############
 
 When writing a program that operates in a shared Avid project alongside active users, 
-it is important for your program to following the same procedures as a "legitimate" 
+it is important for your program to follow the same procedures as a "legitimate" 
 (no offense) Avid system.  :mod:`binlock` exists to help developers design programs that 
 are "good citizens" in this environment.  This document details additional best practices 
 that should be followed to ensure your program plays nicely with other users and machines 

@@ -52,7 +52,7 @@ If a lock file does not appear to be the correct format, this will raise a :clas
         print(f"Bin is locked by {lock.name}")
 
 .. tip::
-    Many of these methods accept an optional ``missing_bin_ok`` ::class:`python:bool`, which defaults to ``True``.
+    Many of these methods accept an optional ``missing_bin_ok`` :class:`python:bool`, which defaults to ``True``.
     
     If ``missing_bin_ok`` is set to ``False``, they will raise a :class:`FileNotFoundError` if the given 
     bin path does not exist.
