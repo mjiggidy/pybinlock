@@ -18,8 +18,8 @@ pybinlock
    no responsibility for any damage to your project, loss of data, or underwhelming box office performance.
 
 
-About Bin Locks
----------------
+About bin locks
+===============
 
 "Bin locking" is a mechanism primarily used in multi-user Avid environments to indicate that a particular machine on the network has temporary ownership 
 over an Avid bin (``.avb`` or ``.avs`` files) to potentially write changes.  While one machine holds the lock, others are still able to 
@@ -27,12 +27,12 @@ open the bin, albeit in read-only mode, until the lock is released.  In this way
 same bin at the same time.
 
 About :mod:`binlock`
---------------------
+====================
 
 This here :mod:`binlock` library works by reading and writing (``.lck``) files, which are the underyling mechanisms used by Avid to mark bins as "locked."
 
-Interesting Uses
-^^^^^^^^^^^^^^^^
+Interesting uses
+----------------
 
 :mod:`binlock` allows functionality beyond Avid's typical lock file implementation, such as:
 
@@ -42,6 +42,11 @@ Interesting Uses
 * Removing "stale" locks
 
 See :doc:`usage` for examples!
+
+See also
+========
+
+- `pybinhistory <https://pybinhistory.readthedocs.io>`_: A python library for reading and writing Avid bin log (``.log``) files
 
 .. toctree::
    :maxdepth: 2
