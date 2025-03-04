@@ -2,28 +2,30 @@
 Utilites for working with bin locks (.lck files)
 """
 
-import dataclasses, pathlib, typing, contextlib
+import pathlib, typing, contextlib
 from .exceptions import BinLockNameError, BinLockFileDecodeError, BinLockExistsError, BinLockNotFoundError, BinLockOwnershipError
 from .defaults import DEFAULT_FILE_EXTENSION, DEFAULT_LOCK_NAME, MAX_NAME_LENGTH, TOTAL_FILE_SIZE
 
-@dataclasses.dataclass(frozen=True)
 class BinLock:
 	"""Represents a bin lock file (.lck)"""
 
-	name:str = DEFAULT_LOCK_NAME
-	"""Name of the Avid the lock belongs to"""
+	def __init__(self, name:str=DEFAULT_LOCK_NAME):
 
-	def __post_init__(self):
-		"""Validate lock name"""
-
-		if not isinstance(self.name, str):
-			raise BinLockNameError(f"Lock name must be a string (got {type(self.name)})")
-		elif not self.name.strip():
+		if not isinstance(name, str):
+			raise BinLockNameError(f"Lock name must be a string (got {type(name)})")
+		elif not name.strip():
 			raise BinLockNameError("Username for the lock must not be empty")
-		elif not self.name.isprintable():
+		elif not name.isprintable():
 			raise BinLockNameError("Username for the lock must not contain non-printable characters")
-		elif len(self.name) > MAX_NAME_LENGTH:
-			raise BinLockNameError(f"Username for the lock must not exceed {MAX_NAME_LENGTH} characters (attempted {len(self.name)} characters)")
+		elif len(name) > MAX_NAME_LENGTH:
+			raise BinLockNameError(f"Username for the lock must not exceed {MAX_NAME_LENGTH} characters (attempted {len(name)} characters)")
+		
+		self._name = name
+
+	@property
+	def name(self) -> str:
+		"""Name of the Avid the lock belongs to"""
+		return self._name
 
 	@staticmethod
 	def _read_utf16le(buffer:typing.BinaryIO) -> str:
@@ -129,6 +131,17 @@ class BinLock:
 		"""Determine the lock path from a given bin path"""
 
 		return str(pathlib.Path(bin_path).with_suffix(DEFAULT_FILE_EXTENSION))
+	
+	def __repr__(self) -> str:
+		return f"<{self.__class__} name={self.name}>"
+	
+	def __str__(self) -> str:
+		return self.name
+	
+	def __eq__(self, other) -> bool:
+		if not isinstance(other, self.__class__):
+			return False
+		return self.name == other.name
 
 class _BinLockContextManager(contextlib.AbstractContextManager):
 	"""Context manager for a binlock file"""
