@@ -75,7 +75,10 @@ class BinLock:
 		if bin_lock != self:
 			raise BinLockOwnershipError(f"This bin is currently locked by {bin_lock.name}")
 		
-		pathlib.Path(self.get_lock_path_from_bin_path(bin_path)).unlink(missing_ok=True)
+		try:
+			pathlib.Path(self.get_lock_path_from_bin_path(bin_path)).unlink()
+		except FileNotFoundError:
+			pass
 	
 	@classmethod
 	def from_bin(cls, bin_path:str, missing_bin_ok:bool=True) -> typing.Optional["BinLock"]:
@@ -162,7 +165,8 @@ class _BinLockContextManager(contextlib.AbstractContextManager):
 		try:
 			self._lock_info.to_path(self._lock_path)
 		except Exception as e:
-			pathlib.Path(self._lock_path).unlink(missing_ok=True)
+			if pathlib.Path(self._lock_path).is_file():
+				pathlib.Path(self._lock_path).unlink()
 			raise e
 
 		return self._lock_info
@@ -170,5 +174,9 @@ class _BinLockContextManager(contextlib.AbstractContextManager):
 	def __exit__(self, exc_type, exc_value, traceback) -> bool:
 		"""Remove the lock on exit and call 'er a day"""
 
-		pathlib.Path(self._lock_path).unlink(missing_ok=True)		
+		try:
+			pathlib.Path(self._lock_path).unlink()
+		except FileNotFoundError:
+			pass
+
 		return False

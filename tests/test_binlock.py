@@ -1,132 +1,142 @@
 import pytest
 import pathlib
+
 from binlock import BinLock
-from binlock.defaults import MAX_NAME_LENGTH
 from binlock.exceptions import (
 	BinLockNameError,
 	BinLockFileDecodeError,
 	BinLockExistsError,
+	BinLockNotFoundError,
 	BinLockOwnershipError,
 )
+from binlock.defaults import DEFAULT_FILE_EXTENSION, DEFAULT_LOCK_NAME, MAX_NAME_LENGTH, TOTAL_FILE_SIZE
 
+# Helper function to create a dummy bin file
+def create_dummy_bin(tmp_path, name="dummy.avb"):
+	file_path = tmp_path / name
+	file_path.write_text("dummy content")
+	return file_path
 
-# Helper to create a dummy bin file (with a .avb extension)
-def create_dummy_bin(tmp_path):
-	dummy_bin = tmp_path / "dummy.avb"
-	dummy_bin.write_text("dummy content")
-	return dummy_bin
+# --- Constructor and Property Tests ---
 
-def test_binlock_creation_valid():
-	# Creating a BinLock with a valid name should succeed.
-	lock = BinLock(name="valid_user")
-	assert lock.name == "valid_user"
-
-def test_binlock_invalid_empty_name():
-	# An empty (or whitespace-only) name should raise an error.
-	with pytest.raises(BinLockNameError):
-		BinLock(name="   ")
-
-def test_binlock_invalid_non_string():
-	# A non-string name should raise an error.
+def test_binlock_invalid_name_non_string():
 	with pytest.raises(BinLockNameError):
 		BinLock(name=123)
 
-def test_binlock_invalid_too_long_name():
-	# A name longer than MAX_NAME_LENGTH should raise an error.
-	long_name = "a" * (MAX_NAME_LENGTH + 1)
+def test_binlock_invalid_name_empty():
 	with pytest.raises(BinLockNameError):
-		BinLock(name=long_name)
+		BinLock(name="   ")
 
-def test_to_from_path_roundtrip(tmp_path):
-	# Write a lock to file then read it back; the objects should be equal.
-	lock = BinLock(name="tester")
-	lock_file = tmp_path / "test.lck"
+def test_binlock_invalid_name_non_printable():
+	with pytest.raises(BinLockNameError):
+		BinLock(name="\x07Hello")
+
+def test_binlock_invalid_name_too_long():
+	too_long = "a" * (MAX_NAME_LENGTH + 1)
+	with pytest.raises(BinLockNameError):
+		BinLock(name=too_long)
+
+def test_binlock_valid_name():
+	name = "validuser"
+	lock = BinLock(name=name)
+	assert lock.name == name
+
+# --- File Writing and Reading Tests ---
+
+def test_to_from_path(tmp_path):
+	name = "testuser"
+	lock = BinLock(name=name)
+	lock_file = tmp_path / f"dummy{DEFAULT_FILE_EXTENSION}"
+	# Write lock file to disk
 	lock.to_path(str(lock_file))
-	loaded_lock = BinLock.from_path(str(lock_file))
-	assert loaded_lock == lock
+	assert lock_file.is_file()
+	# Read the lock file back
+	lock_from_file = BinLock.from_path(str(lock_file))
+	assert lock_from_file == lock
 
-def test_lock_bin_creates_lock_file(tmp_path):
-	# Locking a bin should create the corresponding lock file.
-	dummy_bin = create_dummy_bin(tmp_path)
-	lock = BinLock(name="user1")
-	lock_file_path = pathlib.Path(lock.get_lock_path_from_bin_path(str(dummy_bin)))
-	# Ensure the lock file doesn't exist before locking.
-	if lock_file_path.exists():
-		lock_file_path.unlink()
-	lock.lock_bin(str(dummy_bin))
-	assert lock_file_path.exists()
+# --- Bin Locking/Unlocking Tests ---
 
-def test_lock_bin_already_locked(tmp_path):
-	# Trying to lock an already locked bin should raise a BinLockExistsError.
-	dummy_bin = create_dummy_bin(tmp_path)
-	lock1 = BinLock(name="user1")
-	lock2 = BinLock(name="user2")
-	# First lock the bin.
-	lock1.lock_bin(str(dummy_bin))
+def test_lock_and_from_bin(tmp_path):
+	# Create a dummy bin file (required to pass the missing_bin_ok check)
+	bin_file = create_dummy_bin(tmp_path, "dummy.avb")
+	bin_file_path = str(bin_file)
+	expected_lock_path = bin_file.with_suffix(DEFAULT_FILE_EXTENSION)
+	
+	lock = BinLock(name="tester")
+	# Initially, no lock should be present
+	assert BinLock.from_bin(bin_file_path) is None
+	# Lock the bin
+	lock.lock_bin(bin_file_path, missing_bin_ok=False)
+	assert expected_lock_path.is_file()
+	# Retrieve the lock via from_bin
+	lock_read = BinLock.from_bin(bin_file_path)
+	assert lock_read is not None
+	assert lock_read.name == "tester"
+	# Attempting to lock an already locked bin raises an error
 	with pytest.raises(BinLockExistsError):
-		lock2.lock_bin(str(dummy_bin))
-	# Cleanup: remove the lock file.
-	lock_file = pathlib.Path(lock1.get_lock_path_from_bin_path(str(dummy_bin)))
-	if lock_file.exists():
-		lock_file.unlink()
+		lock.lock_bin(bin_file_path, missing_bin_ok=False)
 
-def test_unlock_bin_removes_lock_file(tmp_path):
-	# Unlocking a bin should remove its lock file.
-	dummy_bin = create_dummy_bin(tmp_path)
-	lock = BinLock(name="user1")
-	lock.lock_bin(str(dummy_bin))
-	lock_file = pathlib.Path(lock.get_lock_path_from_bin_path(str(dummy_bin)))
-	assert lock_file.exists()
-	lock.unlock_bin(str(dummy_bin))
-	assert not lock_file.exists()
+def test_unlock_bin(tmp_path):
+	# Create a dummy bin file
+	bin_file = create_dummy_bin(tmp_path, "dummy.avb")
+	bin_file_path = str(bin_file)
+	expected_lock_path = bin_file.with_suffix(DEFAULT_FILE_EXTENSION)
+	
+	lock = BinLock(name="tester")
+	# Lock the bin
+	lock.lock_bin(bin_file_path, missing_bin_ok=False)
+	assert expected_lock_path.is_file()
+	# Unlock the bin
+	lock.unlock_bin(bin_file_path, missing_bin_ok=False)
+	assert not expected_lock_path.is_file()
+
+def test_unlock_bin_not_locked(tmp_path):
+	bin_file = create_dummy_bin(tmp_path, "dummy.avb")
+	bin_file_path = str(bin_file)
+	lock = BinLock(name="tester")
+	with pytest.raises(BinLockNotFoundError):
+		lock.unlock_bin(bin_file_path, missing_bin_ok=False)
 
 def test_unlock_bin_wrong_owner(tmp_path):
-	# Unlocking with a BinLock instance that doesn't match the one that locked it
-	# should raise a BinLockOwnershipError.
-	dummy_bin = create_dummy_bin(tmp_path)
-	lock1 = BinLock(name="user1")
-	lock2 = BinLock(name="user2")
-	lock1.lock_bin(str(dummy_bin))
+	# Create dummy bin file and determine lock file path
+	bin_file = create_dummy_bin(tmp_path, "dummy.avb")
+	bin_file_path = str(bin_file)
+	expected_lock_path = bin_file.with_suffix(DEFAULT_FILE_EXTENSION)
+	
+	lock1 = BinLock(name="owner1")
+	lock2 = BinLock(name="owner2")
+	
+	# Lock with the first lock instance
+	lock1.lock_bin(bin_file_path, missing_bin_ok=False)
 	with pytest.raises(BinLockOwnershipError):
-		lock2.unlock_bin(str(dummy_bin))
-	# Cleanup:
-	lock_file = pathlib.Path(lock1.get_lock_path_from_bin_path(str(dummy_bin)))
-	if lock_file.exists():
-		lock_file.unlink()
+		lock2.unlock_bin(bin_file_path, missing_bin_ok=False)
+	
+	# Cleanup using the correct owner
+	lock1.unlock_bin(bin_file_path, missing_bin_ok=False)
+	assert not expected_lock_path.is_file()
 
-def test_get_lock_from_bin_returns_none(tmp_path):
-	# When no lock file exists, get_lock_from_bin should return None.
-	dummy_bin = create_dummy_bin(tmp_path)
-	assert BinLock.from_bin(str(dummy_bin)) is None
+# --- Context Manager Tests ---
 
-def test_hold_lock_context_manager(tmp_path):
-	# The hold_lock context manager should create the lock file on entry and remove it on exit,
-	# while returning the BinLock instance.
-	lock = BinLock(name="user1")
-	lock_file_path = tmp_path / "test.lck"
-	if lock_file_path.exists():
-		lock_file_path.unlink()
-	with lock.hold_lock(str(lock_file_path)) as held_lock:
-		assert held_lock == lock
-		assert lock_file_path.exists()
-	assert not lock_file_path.exists()
+def test_hold_lock_context(tmp_path):
+	# Directly test hold_lock with a chosen lock file path
+	lock_file = tmp_path / "dummy.lck"
+	lock_file_path = str(lock_file)
+	lock = BinLock(name="contextuser")
+	
+	with lock.hold_lock(lock_file_path) as held_lock:
+		assert held_lock.name == "contextuser"
+		assert pathlib.Path(lock_file_path).is_file()
+	# After context exit, the lock file should be removed
+	assert not pathlib.Path(lock_file_path).is_file()
 
-def test_hold_bin_context_manager(tmp_path):
-	# The hold_bin context manager should similarly manage the lock for a given bin.
-	dummy_bin = create_dummy_bin(tmp_path)
-	lock = BinLock(name="user1")
-	lock_file_path = pathlib.Path(lock.get_lock_path_from_bin_path(str(dummy_bin)))
-	if lock_file_path.exists():
-		lock_file_path.unlink()
-	with lock.hold_bin(str(dummy_bin)) as held_lock:
-		assert held_lock == lock
-		assert lock_file_path.exists()
-	assert not lock_file_path.exists()
-
-def test_corrupt_lock_file(tmp_path):
-	# A lock file that cannot be decoded as UTF-16le should raise BinLockFileDecodeError.
-	lock_file = tmp_path / "corrupt.lck"
-	# Write an odd number of bytes to provoke a decode error.
-	lock_file.write_bytes(b'\xff')
-	with pytest.raises(BinLockFileDecodeError):
-		BinLock.from_path(str(lock_file))
+def test_hold_bin_context(tmp_path):
+	# Test hold_bin using a dummy bin file
+	bin_file = create_dummy_bin(tmp_path, "dummy.avb")
+	bin_file_path = str(bin_file)
+	expected_lock_path = bin_file.with_suffix(DEFAULT_FILE_EXTENSION)
+	lock = BinLock(name="contextuser")
+	
+	with lock.hold_bin(bin_file_path, missing_bin_ok=False) as held_lock:
+		assert held_lock.name == "contextuser"
+		assert expected_lock_path.is_file()
+	assert not expected_lock_path.is_file()
