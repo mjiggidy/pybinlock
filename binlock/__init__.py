@@ -1,8 +1,8 @@
 """
 A lil' library for reading and writing bin lock (.lck) files
+
 By Michael Jordan <michael@glowingpixel.com>
-https://github.com/mjiggidy/pybinlock
 """
 
+from ._binlock import BinLock
 from . import defaults, exceptions
-from .binlock import BinLock
