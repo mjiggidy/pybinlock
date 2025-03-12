@@ -7,7 +7,7 @@
 pybinlock
 #########
 
-``pybinlock`` is a python package for the :mod:`binlock` library.
+``pybinlock`` is a pypi package for the :mod:`binlock` python library.
 
 :mod:`binlock` is a python library for programmatically locking and unlocking bins in Avid Media Composer projects.
 
