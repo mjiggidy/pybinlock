@@ -41,11 +41,8 @@ class BinLock:
 	
 	def lock_bin(self, bin_path:str, missing_bin_ok:bool=True):
 		"""Lock a given bin (.avb) with this lock"""
-
-		if not missing_bin_ok and not pathlib.Path(bin_path).is_file():
-			raise FileNotFoundError(f"Bin does not exist at {bin_path}")
 		
-		lock_path = self.get_lock_path_from_bin_path(bin_path)
+		lock_path = self.get_lock_path_from_bin_path(bin_path, missing_bin_ok=missing_bin_ok)
 
 		# Prevent locking an already-locked bin
 		if pathlib.Path(lock_path).is_file():
@@ -64,22 +61,27 @@ class BinLock:
 		For safety, the name on the bin lock MUST match the name on this `BinLock` instance
 		"""
 
-		if not missing_bin_ok and not pathlib.Path(bin_path).is_file():
-			raise FileNotFoundError(f"Bin does not exist at {bin_path}")
+		path_lock = self.get_lock_path_from_bin_path(bin_path, missing_bin_ok=missing_bin_ok)
 
-		bin_lock = self.from_bin(bin_path)
+		self.remove_path(path_lock)
 
-		if not bin_lock:
-			raise BinLockNotFoundError("This bin is not currently locked")
+	def remove_path(self, lock_path:str, ownership_check:bool=True):
+		"""
+		Remove a lock from at a given `.lck` path
+		"""
+
+		try:
+			bin_lock = self.from_path(lock_path)
+		except FileNotFoundError as e:
+			raise BinLockNotFoundError("This bin is not currently locked") from e
 		
-		if bin_lock != self:
+		if ownership_check and bin_lock != self: # TIP: Never skip ownership check, brah
 			raise BinLockOwnershipError(f"This bin is currently locked by {bin_lock.name}")
 		
 		try:
-			pathlib.Path(self.get_lock_path_from_bin_path(bin_path)).unlink()
+			pathlib.Path(lock_path).unlink()
 		except FileNotFoundError:
 			pass
-	
 	@classmethod
 	def from_bin(cls, bin_path:str, missing_bin_ok:bool=True) -> typing.Optional["BinLock"]:
 		"""
@@ -87,11 +89,8 @@ class BinLock:
 
 		Returns `None` if the bin is not locked
 		"""
-
-		if not missing_bin_ok and not pathlib.Path(bin_path).is_file():
-			raise FileNotFoundError(f"Bin does not exist at {bin_path}")
 		
-		lock_path = cls.get_lock_path_from_bin_path(bin_path)
+		lock_path = cls.get_lock_path_from_bin_path(bin_path, missing_bin_ok=missing_bin_ok)
 		
 		if not pathlib.Path(lock_path).is_file():
 			return None
@@ -123,15 +122,15 @@ class BinLock:
 	def hold_bin(self, bin_path:str, missing_bin_ok:bool=True) -> "_BinLockContextManager":
 		"""Context manager to hold a lock for a given bin (.avb) path"""
 
-		if not missing_bin_ok and not pathlib.Path(bin_path).is_file():
-			raise FileNotFoundError(f"Bin does not exist at {bin_path}")
-
-		lock_path = self.get_lock_path_from_bin_path(bin_path)
+		lock_path = self.get_lock_path_from_bin_path(bin_path, missing_bin_ok=missing_bin_ok)
 		return _BinLockContextManager(self, lock_path)
 	
 	@staticmethod
-	def get_lock_path_from_bin_path(bin_path:str) -> str:
+	def get_lock_path_from_bin_path(bin_path:str, missing_bin_ok:bool=True) -> str:
 		"""Determine the lock path from a given bin path"""
+
+		if not missing_bin_ok and not pathlib.Path(bin_path).is_file():
+			raise FileNotFoundError(f"Bin does not exist at {bin_path}")
 
 		return str(pathlib.Path(bin_path).with_suffix(DEFAULT_FILE_EXTENSION))
 	
@@ -166,7 +165,7 @@ class _BinLockContextManager(contextlib.AbstractContextManager):
 			self._lock_info.to_path(self._lock_path)
 		except Exception as e:
 			if pathlib.Path(self._lock_path).is_file():
-				pathlib.Path(self._lock_path).unlink()
+				self._lock_info.remove_path(self._lock_path)
 			raise e
 
 		return self._lock_info
@@ -175,7 +174,7 @@ class _BinLockContextManager(contextlib.AbstractContextManager):
 		"""Remove the lock on exit and call 'er a day"""
 
 		try:
-			pathlib.Path(self._lock_path).unlink()
+			self._lock_info.remove_path(self._lock_path)
 		except FileNotFoundError:
 			pass
 
