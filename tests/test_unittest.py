@@ -1,35 +1,109 @@
-import unittest, pathlib
+import unittest, pathlib, tempfile
 from binlock import BinLock, defaults, exceptions
 
-EXAMPLE_NAME = "zTesteroonie"
-EXAMPLE_PATH = str(pathlib.Path(__file__).with_name("example.lck"))
-EXAMPLE_BIN  = str(pathlib.Path(__file__).with_name("example.avb"))
+EXAMPLE_NAME  = "zTesteroonie"
+EXAMPLE_PATH  = str(pathlib.Path(__file__).with_name("example.lck"))
+EXAMPLE_BIN   = str(pathlib.Path(__file__).with_name("example.avb"))
+EXAMPLE_NOBIN = str(pathlib.Path(__file__).with_name("notabin.avb"))
 
 class BinLockTests(unittest.TestCase):
 
-	def test_readLock(self):
+	def test_validate(self):
 
-		# Bin exists
-		BinLock.from_bin(EXAMPLE_BIN)
-		lock = BinLock.from_bin(EXAMPLE_BIN, missing_bin_ok=False)
-		self.assertEqual(lock.name, EXAMPLE_NAME)
+		# ---
+		# Validate lock name
+		# ---
 
-		# Check bin not exist
-		self.assertIsNone(BinLock.from_bin("NOTABIN.avb"))
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock("")
+
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock(" ")
+
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock(2)
+
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock(int)
+
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock("Heeheehee\n")
+
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock("A" * (defaults.MAX_NAME_LENGTH+1))
+		
+		BinLock("A" * defaults.MAX_NAME_LENGTH)
+		BinLock("💦") # TODO: I... GUESS this is valid?
+		BinLock(defaults.DEFAULT_LOCK_NAME)
+		
+		# ---
+		# Write locks
+		# ---
+
 		with self.assertRaises(FileNotFoundError):
-			BinLock.from_bin("NOTABIN.avb", missing_bin_ok=False)
+			BinLock(EXAMPLE_NAME).lock_bin(EXAMPLE_NOBIN, missing_bin_ok=False)
+		BinLock(EXAMPLE_NAME).lock_bin(EXAMPLE_NOBIN, missing_bin_ok=True)
+		
+		# Existing bin
+		# Write
+		BinLock(EXAMPLE_NAME).lock_bin(EXAMPLE_BIN, missing_bin_ok=False)
+		# But don't overwrite
+		with self.assertRaises(exceptions.BinLockExistsError):
+			BinLock(EXAMPLE_NAME).lock_bin(EXAMPLE_BIN)
 
-		# Not a lock
-		with self.assertRaises(exceptions.BinLockFileDecodeError):
-			BinLock.from_path(EXAMPLE_BIN)
-	
-	def test_unlockBin(self):
+		self.assertEqual(pathlib.Path(EXAMPLE_PATH).stat().st_size, defaults.TOTAL_FILE_SIZE * 2)
 
+		# ---
+		# Read locks
+		# ---
+
+		# Lock exists (from test_writelock) but bin doesn't
+		with self.assertRaises(FileNotFoundError):
+			BinLock.from_bin(EXAMPLE_NOBIN, missing_bin_ok=False)
+		
+		lock1 = BinLock.from_bin(EXAMPLE_NOBIN)
+
+		BinLock.from_bin(EXAMPLE_BIN)
+		lock2 = BinLock.from_bin(EXAMPLE_BIN, missing_bin_ok=False)
+
+		self.assertTrue(lock1.name == lock2.name == EXAMPLE_NAME)
+
+		# ---
+		# Remove locks
+		# ---
+
+		# Remove nobin
+		with self.assertRaises(FileNotFoundError):
+			BinLock().unlock_bin(EXAMPLE_NOBIN, missing_bin_ok=False)
 		with self.assertRaises(exceptions.BinLockOwnershipError):
-			BinLock("NotTheName").unlock_bin(EXAMPLE_BIN)
+			BinLock("peepee").unlock_bin(EXAMPLE_NOBIN)
+		
+		self.assertTrue(pathlib.Path(EXAMPLE_NOBIN).with_suffix(".lck").is_file())
+		lock1.unlock_bin(EXAMPLE_NOBIN)
+		self.assertFalse(pathlib.Path(EXAMPLE_NOBIN).with_suffix(".lck").is_file())
+		with self.assertRaises(exceptions.BinLockNotFoundError):
+			lock1.unlock_bin(EXAMPLE_NOBIN)
 
+		# Remove bin
+		with self.assertRaises(exceptions.BinLockOwnershipError):
+			BinLock("peepee").unlock_bin(EXAMPLE_BIN)
+		self.assertTrue(pathlib.Path(EXAMPLE_BIN).with_suffix(".lck").is_file())
+		lock2.unlock_bin(EXAMPLE_BIN, missing_bin_ok=False)
+		self.assertFalse(pathlib.Path(EXAMPLE_BIN).with_suffix(".lck").is_file())
+		with self.assertRaises(exceptions.BinLockNotFoundError):
+			lock2.unlock_bin(EXAMPLE_BIN, missing_bin_ok=False)
 		
 
+		# ---
+		# Context manager
+		# ---
+
+		with BinLock.hold_bin(EXAMPLE_BIN):
+			self.assertTrue(pathlib.Path(EXAMPLE_PATH).is_file())
+
+
+
 if __name__ == "__main__":
+
 
 	unittest.main()
