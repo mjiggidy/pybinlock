@@ -1,0 +1,40 @@
+name: Run Python Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-python-3-7:
+    runs-on: ubuntu-22.04  # Use Ubuntu 22.04 for Python 3.7
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.6"
+
+      - name: Install package
+        run: pip install .
+
+      - name: Run unittests
+        run: python -m unittest discover -s tests
+
+  test-python-latest:
+    runs-on: ubuntu-latest  # Uses latest Ubuntu for latest python
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python latest
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install package
+        run: pip install .
+
+      - name: Run unittests
+        run: python -m unittest discover -s tests
