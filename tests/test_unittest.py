@@ -98,31 +98,31 @@ class BinLockTests(unittest.TestCase):
 		# Context manager
 		# ---
 
+		# Bin already locked
 		BinLock("HereFirst").lock_bin(EXAMPLE_BIN)
 		with self.assertRaises(exceptions.BinLockExistsError), BinLock().hold_bin(EXAMPLE_BIN) as lock:
 			print(lock)
 		BinLock("HereFirst").unlock_bin(EXAMPLE_BIN)
 		self.assertIsNone(BinLock("HereFirst").from_bin(EXAMPLE_BIN))
 
+		# All is well
 		with BinLock("M. Holden").hold_bin(EXAMPLE_BIN) as lock:
 			# Lock exists and matches the name
-			self.assertEqual(BinLock.from_bin(EXAMPLE_BIN).name, lock.name)
+			self.assertEqual(BinLock.from_bin(EXAMPLE_BIN), lock)
 		self.assertIsNone(BinLock.from_bin(EXAMPLE_BIN))
 
-		with BinLock(EXAMPLE_NAME).hold_bin(EXAMPLE_BIN) as lock:
+		with self.assertRaises(exceptions.BinLockNotFoundError), BinLock(EXAMPLE_NAME).hold_bin(EXAMPLE_BIN) as lock:
 			# Remove lock unexpectedly like a bad person
+			self.assertEqual(lock, BinLock.from_bin(EXAMPLE_BIN))
 			lock.unlock_bin(EXAMPLE_BIN)
-			# Should fail silently
+		self.assertIsNone(BinLock.from_bin(EXAMPLE_BIN))
 
-		with BinLock(EXAMPLE_NAME).hold_bin(EXAMPLE_BIN) as lock:
-
+		with self.assertRaises(exceptions.BinLockOwnershipError), BinLock(EXAMPLE_NAME).hold_bin(EXAMPLE_BIN) as lock:
 			# REPLACE lock unexpectly
 			# You deserve whatever happens here honestly smdh
 			lock.unlock_bin(EXAMPLE_BIN)
 			BinLock("Satan").lock_bin(EXAMPLE_BIN)
-
-
-
+		BinLock("Satan").unlock_bin(EXAMPLE_BIN)
 
 if __name__ == "__main__":
 
