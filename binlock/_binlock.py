@@ -154,6 +154,7 @@ class _BinLockContextManager(contextlib.AbstractContextManager):
 
 		self._lock_info = lock
 		self._lock_path = lock_path
+		self._lock_active = False
 
 	def __enter__(self) -> BinLock:
 		"""Write the lock on enter"""
@@ -163,19 +164,26 @@ class _BinLockContextManager(contextlib.AbstractContextManager):
 		
 		try:
 			self._lock_info.to_path(self._lock_path)
+			self._lock_active = True
 		except Exception as e:
 			if pathlib.Path(self._lock_path).is_file():
 				self._lock_info.remove_path(self._lock_path)
-			raise e
+			raise RuntimeError from e
 
 		return self._lock_info
 
 	def __exit__(self, exc_type, exc_value, traceback) -> bool:
 		"""Remove the lock on exit and call 'er a day"""
 
+		# Something failed during __enter__
+		if not self._lock_active:
+			return False
+
 		try:
 			self._lock_info.remove_path(self._lock_path)
-		except FileNotFoundError:
-			pass
+		except BinLockNotFoundError as e:
+				raise BinLockNotFoundError("Bin lock was removed before context manager exit!") from e
+		except BinLockOwnershipError as e:
+				raise BinLockOwnershipError("Bin lock owner changed since its creation!") from e
 
 		return False
