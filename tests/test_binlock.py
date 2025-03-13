@@ -1,142 +1,130 @@
-import pytest
-import pathlib
+import unittest, pathlib, tempfile
+from binlock import BinLock, defaults, exceptions
 
-from binlock import BinLock
-from binlock.exceptions import (
-	BinLockNameError,
-	BinLockFileDecodeError,
-	BinLockExistsError,
-	BinLockNotFoundError,
-	BinLockOwnershipError,
-)
-from binlock.defaults import DEFAULT_FILE_EXTENSION, DEFAULT_LOCK_NAME, MAX_NAME_LENGTH, TOTAL_FILE_SIZE
+EXAMPLE_NAME  = "zTesteroonie"
+EXAMPLE_PATH  = str(pathlib.Path(__file__).with_name("example.lck"))
+EXAMPLE_BIN   = str(pathlib.Path(__file__).with_name("example.avb"))
+EXAMPLE_NOBIN = str(pathlib.Path(__file__).with_name("notabin.avb"))
 
-# Helper function to create a dummy bin file
-def create_dummy_bin(tmp_path, name="dummy.avb"):
-	file_path = tmp_path / name
-	file_path.write_text("dummy content")
-	return file_path
+class BinLockTests(unittest.TestCase):
 
-# --- Constructor and Property Tests ---
+	def test_validate(self):
 
-def test_binlock_invalid_name_non_string():
-	with pytest.raises(BinLockNameError):
-		BinLock(name=123)
+		# ---
+		# Validate lock name
+		# ---
 
-def test_binlock_invalid_name_empty():
-	with pytest.raises(BinLockNameError):
-		BinLock(name="   ")
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock("")
 
-def test_binlock_invalid_name_non_printable():
-	with pytest.raises(BinLockNameError):
-		BinLock(name="\x07Hello")
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock(" ")
 
-def test_binlock_invalid_name_too_long():
-	too_long = "a" * (MAX_NAME_LENGTH + 1)
-	with pytest.raises(BinLockNameError):
-		BinLock(name=too_long)
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock(2)
 
-def test_binlock_valid_name():
-	name = "validuser"
-	lock = BinLock(name=name)
-	assert lock.name == name
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock(int)
 
-# --- File Writing and Reading Tests ---
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock("Heeheehee\n")
 
-def test_to_from_path(tmp_path):
-	name = "testuser"
-	lock = BinLock(name=name)
-	lock_file = tmp_path / f"dummy{DEFAULT_FILE_EXTENSION}"
-	# Write lock file to disk
-	lock.to_path(str(lock_file))
-	assert lock_file.is_file()
-	# Read the lock file back
-	lock_from_file = BinLock.from_path(str(lock_file))
-	assert lock_from_file == lock
+		with self.assertRaises(exceptions.BinLockNameError):
+			BinLock("A" * (defaults.MAX_NAME_LENGTH+1))
+		
+		BinLock("A" * defaults.MAX_NAME_LENGTH)
+		BinLock("💦") # TODO: I... GUESS this is valid?
+		BinLock(defaults.DEFAULT_LOCK_NAME)
+		
+		# ---
+		# Write locks
+		# ---
 
-# --- Bin Locking/Unlocking Tests ---
+		with self.assertRaises(FileNotFoundError):
+			BinLock(EXAMPLE_NAME).lock_bin(EXAMPLE_NOBIN, missing_bin_ok=False)
+		BinLock(EXAMPLE_NAME).lock_bin(EXAMPLE_NOBIN, missing_bin_ok=True)
+		
+		# Existing bin
+		# Write
+		BinLock(EXAMPLE_NAME).lock_bin(EXAMPLE_BIN, missing_bin_ok=False)
+		# But don't overwrite
+		with self.assertRaises(exceptions.BinLockExistsError):
+			BinLock(EXAMPLE_NAME).lock_bin(EXAMPLE_BIN)
 
-def test_lock_and_from_bin(tmp_path):
-	# Create a dummy bin file (required to pass the missing_bin_ok check)
-	bin_file = create_dummy_bin(tmp_path, "dummy.avb")
-	bin_file_path = str(bin_file)
-	expected_lock_path = bin_file.with_suffix(DEFAULT_FILE_EXTENSION)
-	
-	lock = BinLock(name="tester")
-	# Initially, no lock should be present
-	assert BinLock.from_bin(bin_file_path) is None
-	# Lock the bin
-	lock.lock_bin(bin_file_path, missing_bin_ok=False)
-	assert expected_lock_path.is_file()
-	# Retrieve the lock via from_bin
-	lock_read = BinLock.from_bin(bin_file_path)
-	assert lock_read is not None
-	assert lock_read.name == "tester"
-	# Attempting to lock an already locked bin raises an error
-	with pytest.raises(BinLockExistsError):
-		lock.lock_bin(bin_file_path, missing_bin_ok=False)
+		self.assertEqual(pathlib.Path(EXAMPLE_PATH).stat().st_size, defaults.TOTAL_FILE_SIZE * 2)
 
-def test_unlock_bin(tmp_path):
-	# Create a dummy bin file
-	bin_file = create_dummy_bin(tmp_path, "dummy.avb")
-	bin_file_path = str(bin_file)
-	expected_lock_path = bin_file.with_suffix(DEFAULT_FILE_EXTENSION)
-	
-	lock = BinLock(name="tester")
-	# Lock the bin
-	lock.lock_bin(bin_file_path, missing_bin_ok=False)
-	assert expected_lock_path.is_file()
-	# Unlock the bin
-	lock.unlock_bin(bin_file_path, missing_bin_ok=False)
-	assert not expected_lock_path.is_file()
+		# ---
+		# Read locks
+		# ---
 
-def test_unlock_bin_not_locked(tmp_path):
-	bin_file = create_dummy_bin(tmp_path, "dummy.avb")
-	bin_file_path = str(bin_file)
-	lock = BinLock(name="tester")
-	with pytest.raises(BinLockNotFoundError):
-		lock.unlock_bin(bin_file_path, missing_bin_ok=False)
+		# Lock exists (from test_writelock) but bin doesn't
+		with self.assertRaises(FileNotFoundError):
+			BinLock.from_bin(EXAMPLE_NOBIN, missing_bin_ok=False)
+		
+		lock1 = BinLock.from_bin(EXAMPLE_NOBIN)
 
-def test_unlock_bin_wrong_owner(tmp_path):
-	# Create dummy bin file and determine lock file path
-	bin_file = create_dummy_bin(tmp_path, "dummy.avb")
-	bin_file_path = str(bin_file)
-	expected_lock_path = bin_file.with_suffix(DEFAULT_FILE_EXTENSION)
-	
-	lock1 = BinLock(name="owner1")
-	lock2 = BinLock(name="owner2")
-	
-	# Lock with the first lock instance
-	lock1.lock_bin(bin_file_path, missing_bin_ok=False)
-	with pytest.raises(BinLockOwnershipError):
-		lock2.unlock_bin(bin_file_path, missing_bin_ok=False)
-	
-	# Cleanup using the correct owner
-	lock1.unlock_bin(bin_file_path, missing_bin_ok=False)
-	assert not expected_lock_path.is_file()
+		BinLock.from_bin(EXAMPLE_BIN)
+		lock2 = BinLock.from_bin(EXAMPLE_BIN, missing_bin_ok=False)
 
-# --- Context Manager Tests ---
+		self.assertTrue(lock1.name == lock2.name == EXAMPLE_NAME)
 
-def test_hold_lock_context(tmp_path):
-	# Directly test hold_lock with a chosen lock file path
-	lock_file = tmp_path / "dummy.lck"
-	lock_file_path = str(lock_file)
-	lock = BinLock(name="contextuser")
-	
-	with lock.hold_lock(lock_file_path) as held_lock:
-		assert held_lock.name == "contextuser"
-		assert pathlib.Path(lock_file_path).is_file()
-	# After context exit, the lock file should be removed
-	assert not pathlib.Path(lock_file_path).is_file()
+		# ---
+		# Remove locks
+		# ---
 
-def test_hold_bin_context(tmp_path):
-	# Test hold_bin using a dummy bin file
-	bin_file = create_dummy_bin(tmp_path, "dummy.avb")
-	bin_file_path = str(bin_file)
-	expected_lock_path = bin_file.with_suffix(DEFAULT_FILE_EXTENSION)
-	lock = BinLock(name="contextuser")
-	
-	with lock.hold_bin(bin_file_path, missing_bin_ok=False) as held_lock:
-		assert held_lock.name == "contextuser"
-		assert expected_lock_path.is_file()
-	assert not expected_lock_path.is_file()
+		# Remove nobin
+		with self.assertRaises(FileNotFoundError):
+			BinLock().unlock_bin(EXAMPLE_NOBIN, missing_bin_ok=False)
+		with self.assertRaises(exceptions.BinLockOwnershipError):
+			BinLock("peepee").unlock_bin(EXAMPLE_NOBIN)
+		
+		self.assertTrue(pathlib.Path(EXAMPLE_NOBIN).with_suffix(".lck").is_file())
+		lock1.unlock_bin(EXAMPLE_NOBIN)
+		self.assertFalse(pathlib.Path(EXAMPLE_NOBIN).with_suffix(".lck").is_file())
+		with self.assertRaises(exceptions.BinLockNotFoundError):
+			lock1.unlock_bin(EXAMPLE_NOBIN)
+
+		# Remove bin
+		with self.assertRaises(exceptions.BinLockOwnershipError):
+			BinLock("peepee").unlock_bin(EXAMPLE_BIN)
+		self.assertTrue(pathlib.Path(EXAMPLE_BIN).with_suffix(".lck").is_file())
+		lock2.unlock_bin(EXAMPLE_BIN, missing_bin_ok=False)
+		self.assertFalse(pathlib.Path(EXAMPLE_BIN).with_suffix(".lck").is_file())
+		with self.assertRaises(exceptions.BinLockNotFoundError):
+			lock2.unlock_bin(EXAMPLE_BIN, missing_bin_ok=False)
+		
+
+		# ---
+		# Context manager
+		# ---
+
+		# Bin already locked
+		BinLock("HereFirst").lock_bin(EXAMPLE_BIN)
+		with self.assertRaises(exceptions.BinLockExistsError), BinLock().hold_bin(EXAMPLE_BIN) as lock:
+			print(lock)
+		BinLock("HereFirst").unlock_bin(EXAMPLE_BIN)
+		self.assertIsNone(BinLock("HereFirst").from_bin(EXAMPLE_BIN))
+
+		# All is well
+		with BinLock("M. Holden").hold_bin(EXAMPLE_BIN) as lock:
+			# Lock exists and matches the name
+			self.assertEqual(BinLock.from_bin(EXAMPLE_BIN), lock)
+		self.assertIsNone(BinLock.from_bin(EXAMPLE_BIN))
+
+		with self.assertRaises(exceptions.BinLockNotFoundError), BinLock(EXAMPLE_NAME).hold_bin(EXAMPLE_BIN) as lock:
+			# Remove lock unexpectedly like a bad person
+			self.assertEqual(lock, BinLock.from_bin(EXAMPLE_BIN))
+			lock.unlock_bin(EXAMPLE_BIN)
+		self.assertIsNone(BinLock.from_bin(EXAMPLE_BIN))
+
+		with self.assertRaises(exceptions.BinLockOwnershipError), BinLock(EXAMPLE_NAME).hold_bin(EXAMPLE_BIN) as lock:
+			# REPLACE lock unexpectly
+			# You deserve whatever happens here honestly smdh
+			lock.unlock_bin(EXAMPLE_BIN)
+			BinLock("Satan").lock_bin(EXAMPLE_BIN)
+		BinLock("Satan").unlock_bin(EXAMPLE_BIN)
+
+if __name__ == "__main__":
+
+
+	unittest.main()
