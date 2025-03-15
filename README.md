@@ -30,6 +30,17 @@ cd pybinlock
 pip install .
 ```
 
+Now you can import `binlock`!
+
+```python
+from binlock import BinLock
+
+with BinLock("Do Not Touch").hold_bin("Reel 1.avb") as my_lock:
+  print(f"Bin is now locked as {my_lock.name}")
+  ...
+print("Bin is now unlocked!")
+```
+
 ## Usage
 
 See [readthedocs.io](https://pybinlock.readthedocs.io) for general usage and API documentation!
