@@ -16,3 +16,9 @@ class BinLockNotFoundError(FileNotFoundError):
 
 class BinLockOwnershipError(PermissionError):
 	"""The existing bin lock belongs to another entity (lock names do not match)"""
+
+class BinLockChangedError(RuntimeError):
+	"""A bin lock was changed or removed unexpectedly"""
+
+class BinNotFoundError(FileNotFoundError):
+	"""An expected bin does not exist"""

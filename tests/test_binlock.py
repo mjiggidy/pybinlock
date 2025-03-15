@@ -73,7 +73,7 @@ class BinLockTests(unittest.TestCase):
 		# ---
 
 		# Remove nobin
-		with self.assertRaises(FileNotFoundError):
+		with self.assertRaises(exceptions.BinNotFoundError):
 			BinLock().unlock_bin(EXAMPLE_NOBIN, missing_bin_ok=False)
 		with self.assertRaises(exceptions.BinLockOwnershipError):
 			BinLock("peepee").unlock_bin(EXAMPLE_NOBIN)
@@ -111,13 +111,13 @@ class BinLockTests(unittest.TestCase):
 			self.assertEqual(BinLock.from_bin(EXAMPLE_BIN), lock)
 		self.assertIsNone(BinLock.from_bin(EXAMPLE_BIN))
 
-		with self.assertRaises(exceptions.BinLockNotFoundError), BinLock(EXAMPLE_NAME).hold_bin(EXAMPLE_BIN) as lock:
+		with self.assertRaises(exceptions.BinLockChangedError), BinLock(EXAMPLE_NAME).hold_bin(EXAMPLE_BIN) as lock:
 			# Remove lock unexpectedly like a bad person
 			self.assertEqual(lock, BinLock.from_bin(EXAMPLE_BIN))
 			lock.unlock_bin(EXAMPLE_BIN)
 		self.assertIsNone(BinLock.from_bin(EXAMPLE_BIN))
 
-		with self.assertRaises(exceptions.BinLockOwnershipError), BinLock(EXAMPLE_NAME).hold_bin(EXAMPLE_BIN) as lock:
+		with self.assertRaises(exceptions.BinLockChangedError), BinLock(EXAMPLE_NAME).hold_bin(EXAMPLE_BIN) as lock:
 			# REPLACE lock unexpectly
 			# You deserve whatever happens here honestly smdh
 			lock.unlock_bin(EXAMPLE_BIN)
