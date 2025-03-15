@@ -22,7 +22,7 @@ About bin locks
 ===============
 
 "Bin locking" is a mechanism primarily used in multi-user Avid environments to indicate that a particular machine on the network has temporary ownership 
-over an Avid bin (``.avb`` or ``.avs`` files) to potentially write changes.  While one machine holds the lock, others are still able to 
+over an Avid bin (``.avb`` or ``.avc`` files) to potentially write changes.  While one machine holds the lock, others are still able to 
 open the bin, albeit in read-only mode, until the lock is released.  In this way, two operators cannot inadvertently make changes to the 
 same bin at the same time.
 

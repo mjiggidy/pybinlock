@@ -1,6 +1,6 @@
 import sys, pathlib, dataclasses
 from datetime import datetime, timezone
-from binlock import BinLock
+from binlock import BinLock, exceptions
 
 USAGE_STRING = f"Usage: {pathlib.Path(__file__).name} avid_project_folder_path"
 
@@ -28,40 +28,48 @@ def get_lock_details(lock_path:pathlib.Path) -> LockDetails:
 
 if __name__ == "__main__":
 
-	if not len(sys.argv) > 1:
+	if not len(sys.argv) > 1 or not pathlib.Path(sys.argv[1]).is_dir():
 		print(USAGE_STRING, file=sys.stderr)
 		sys.exit(1)
-
-	path_project = sys.argv[1]
 	
-	if not pathlib.Path(path_project).is_dir():
-		print(f"Not a valid Avid project folder: {path_project}", file=sys.stderr)
-		print(USAGE_STRING, file=sys.stderr)
-		sys.exit(2)
+	stray_locks:list[pathlib.Path]   = []
+	invalid_locks:list[pathlib.Path] = []
 
-	locks:list[LockDetails] = []
+	for path_lock in pathlib.Path(sys.argv[1]).rglob("*.lck"):
 
-	for lock_path in pathlib.Path(path_project).rglob("*.lck"):
-		
-		if lock_path.name.startswith("."):
-			# Skip resource forks
+		if path_lock.name.startswith("."):
 			continue
 
 		try:
-			locks.append(get_lock_details(lock_path))
-		except Exception as e:
-			print(f"Skipping {lock_path}: {e}", file=sys.stderr)
+			lock_info = BinLock.from_path(path_lock)
+		except exceptions.BinLockFileDecodeError:
+			invalid_locks.append(path_lock)
+			continue
+		except exceptions.BinLockNameError:
+			invalid_locks.append(path_lock)
 			continue
 
-	print("")
-	
-	if not locks:
-		print("No locks found!  That's nice.")
-		sys.exit(0)
-	
-	print(f"Found {len(locks)} lock(s):")
-	print("")
+		
+		if pathlib.Path(path_lock.with_suffix(".avb")).is_file():
+			path_bin = pathlib.Path(path_lock.with_suffix(".avb"))
+		elif pathlib.Path(path_lock.with_suffix(".avc")).is_file():
+			path_bin = pathlib.Path(path_lock.with_suffix(".avc"))
+		else:
+			stray_locks.append(path_lock)
 
-	for lock_details in sorted(locks, key = lambda l: l.timestamp_modified):
+		timestamp = datetime.fromtimestamp(path_lock.stat().st_mtime, tz=timezone.utc)
 
-		print(f"{lock_details.timestamp_modified.strftime('%Y-%m-%d %H:%M')} \t{lock_details.lock_info.name.ljust(24)} \t{lock_details.bin_path}")
+		print(f"{path_bin.name:>72}  :  Locked by {lock_info.name} on {timestamp}")
+	
+
+	if stray_locks:
+		print("")
+		print("Stray Locks:")
+		for path_lock in stray_locks:
+			print(path_lock)
+	if invalid_locks:
+		print("")
+		print("Invalid Locks:")
+		for path_lock in invalid_locks:
+			print(path_lock)
+	
