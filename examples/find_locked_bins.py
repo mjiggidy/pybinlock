@@ -56,6 +56,7 @@ if __name__ == "__main__":
 			path_bin = pathlib.Path(path_lock.with_suffix(".avc"))
 		else:
 			stray_locks.append(path_lock)
+			continue
 
 		timestamp = datetime.fromtimestamp(path_lock.stat().st_mtime, tz=timezone.utc)
 
