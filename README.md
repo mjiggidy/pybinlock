@@ -35,4 +35,4 @@ pip install .
 See [readthedocs.io](https://pybinlock.readthedocs.io) for general usage and API documentation!
 
 ## See Also
-- [`pybinhistory`](https://github.com/mjiggidy/pybinhistory) - Programmatcially read and write Avid bin history log (`.log`) files
+- [`pybinhistory`](https://github.com/mjiggidy/pybinhistory) - Programmatically read and write Avid bin history log (`.log`) files
